@@ -1,0 +1,19 @@
+{
+  "name": "timber",
+  "description": "Timber templating",
+  "version": "0.0.1",
+  "author": "Anders Thøgersen <anders@bladre.dk>",
+  "licenses": [
+    "MIT"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/aklt/"
+  },
+  "main": "./index.js",
+  "bin": "./bin/timber",
+  "homepage": "http://bladre.dk/scripts",
+  "devDependencies": {
+    "tape": "^4.2.2"
+  }
+}
