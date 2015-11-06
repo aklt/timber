@@ -5,7 +5,7 @@ var fs = require('fs'),
 
 var m = module.exports = {};
 
-var builtinDefinitions = `// Include definitions for templates v${pkg.version}
+var builtinDefinitions = `// Include definitions for timber v${pkg.version}
 var escapeMap = {
         '&': '&amp;',
         '<': '&lt;',
@@ -258,7 +258,7 @@ function compileDir(dirname, context, template, data) {
     throw new Error("Usage: tpl <dirname>");
   }
 
-  var blurb = '// Templates v' + pkg.version + ' compiled ' +
+  var blurb = '// Timber templates v' + pkg.version + ' compiled ' +
                                  (new Date()).toISOString() + '\n',
       result = [ ];
   fs.readdirSync(dirname).forEach(function (file) {
