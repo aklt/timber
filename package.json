@@ -1,10 +1,10 @@
 {
   "name": "timber",
   "description": "Timber templating",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "author": "Anders Thøgersen <anders@bladre.dk>",
   "licenses": [
-    "MIT"
+    "GPL"
   ],
   "repository": {
     "type": "git",
