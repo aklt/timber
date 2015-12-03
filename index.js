@@ -1,9 +1,9 @@
 // Static templates form a directory of markup
 
-var fs = require('fs'),
-    pkg = require('./package');
+var fs = require('fs')
+var pkg = require('./package')
 
-var m = module.exports = {};
+var m = module.exports = {}
 
 var builtinDefinitions = `// Include definitions for timber v${pkg.version}
 var escapeMap = {
@@ -17,28 +17,42 @@ var escapeMap = {
     regex = new RegExp(Object.keys(escapeMap).join('|'), 'g');
 
 function escapeHtml(aString) {
-    return (aString + '').replace(regex, function (char) {
-        return escapeMap[char];
+    return (aString + '').replace(regex, function (ch) {
+        return escapeMap[ch];
     });
 }
 
 function escapeText(t) {
-   return t.replace(/(")/g, '\\\\"');
+   return (t + '').replace(/(")/g, '\\\\"');
 }
 
 function escapeJson(o) {
   return JSON.stringify(o, 0, 2);
 }
-`;
+`
 
 // define escapeHtml and escapeText for this file
-eval(builtinDefinitions);
+eval(builtinDefinitions)
 
 var methods = {
-    h:   'escapeHtml',
-    t:   'escapeText',
-    j:   'escapeJson',
-    '(': 'evaluate' // TODO Implement evaluate
+  h: 'escapeHtml',
+  t: 'escapeText',
+  j: 'escapeJson',
+  e: '',         // XXX raw
+  '(': 'evaluate', // TODO Implement evaluate
+  '.': 'NONE'      // Dont invoke a function
+}
+
+var methods1 = {
+  h: {
+    name:     'escapeHtml',
+    call:          'apply',
+    method:       ''
+  },
+  d: {
+    name:     'defaultArg',
+    argParse: 'apply',      // Parse the arguments to {d <args>} as an array, fit for apply
+  }
 };
 
 function replaceVar(args, varName) {
@@ -46,19 +60,21 @@ function replaceVar(args, varName) {
   if (args[0] === '(')
     args = '( ' + args.slice(1);
   var a = args.split(/\s+/g);
-  if (!methods[a[0]])
+  if (!methods.hasOwnProperty(a[0]))
     throw new Error("No method '" + a[0] + "'");
   var keyLookup = a.slice(1).join(' ').trim();
-  if (/^\d+$/.test(keyLookup)) {
-    keyLookup = '[' + keyLookup + ']';
+  if (a[0] === 'e') {
+    // keyLookup = keyLookup;
+  } else if (/^\d+$/.test(keyLookup)) {
+    keyLookup = varName + '[' + keyLookup + ']';
   } else if (/^\w+$/.test(keyLookup)) {
-    keyLookup = '.' + keyLookup;
+    keyLookup = varName + '.' + keyLookup;
   } else if (/^\.$/.test(keyLookup)) {
-    keyLookup = '';
-  } else if (/^\W+$/.test(keyLookup)) {
-    keyLookup = '["' + keyLookup + '"]';
+    keyLookup = varName;
+  } else if (/\W/.test(keyLookup)) {
+    keyLookup = varName + '["' + keyLookup + '"]';
   }
-  return '" + ' + methods[a[0]] + '(' + varName + keyLookup + ') + "';
+  return '" + ' + methods[a[0]] + '(' + keyLookup + ') + "';
 }
 
 function replaceParts(text, varName) {
@@ -156,23 +172,34 @@ function cmdHeader(head, indent) {
   case 'if':
     return ['o', indent1 + 'if (' + head.args + ') {\n' + indent2 +
       'result += '];
-    case 'else':
-      return ['o', indent1 + 'else {\n' + indent2 + 'result += '  ];
-    case 'elsif':
-      return ['o', indent1 + 'else if (' + head.args + ') {\n' + indent2 + 'result += '];
-    case 'loop':
-      var itName = getVarName(),
-      varName = getVarName(),
-      array = head.args || 'o';
+  case 'else':
+    return ['o', indent1 + 'else {\n' + indent2 + 'result += '  ];
+  case 'elsif':
+    return ['o', indent1 + 'else if (' + head.args + ') {\n' + indent2 + 'result += '];
+  case 'loop':
+    var itName = getVarName(),
+    varName = getVarName(),
+    array = head.args || 'o';
 
-      return [varName, indent1 +
-        'for (var ' + itName + ' = 0; ' +
-          itName    + ' < ' + array + '.length; ' + itName + ' += 1) {\n' +
-            indent2   + 'var ' + varName + ' = ' + 
-            array + '[' + itName + '];\n' +
-      indent2   + 'result += '];
-    case 'function':
-      return ['o', 'function (o) {\n' + indent2 + 'var result = '];
+    return [varName, indent1 +
+      'for (var ' + itName + ' = 0; ' +
+        itName    + ' < ' + array + '.length; ' + itName + ' += 1) {\n' +
+          indent2   + 'var ' + varName + ' = ' + 
+          array + '[' + itName + '];\n' +
+    indent2   + 'result += '];
+  case 'each':
+    var itName = getVarName(),
+        varName = getVarName();
+    array = head.args || 'o';
+
+    return [varName, indent1 +
+      'for (var ' + itName + ' in ' + array + ') {\n' +
+        indent2   + 'var ' + varName + ' = ' + array + '[' + 
+                                              itName +'];\n' +
+        indent2   + 'result += '];
+
+  case 'function':
+    return ['o', 'function (o) {\n' + indent2 + 'var result = '];
   }
 }
 
@@ -183,8 +210,7 @@ function stringify(ast) {
 function _stringify(ast, indent) {
     var result   = [],
         head     = ast[0],
-        cmd      = cmdHeader(ast[0], indent),
-        varName  = cmd[0],
+        cmd      = cmdHeader(ast[0], indent), varName  = cmd[0],
         cmdText  = cmd[1],
         hadArray = false,
         header   = '',
@@ -223,7 +249,7 @@ function _stringify(ast, indent) {
       collect();
 
     switch(head.cmd) {
-    case 'if': case 'elseif': case 'else': case 'loop':
+    case 'if': case 'elseif': case 'else': case 'loop': case 'each':
       result.push(spaces(indent) + '}\n');
       break;
     case 'function':
@@ -267,7 +293,7 @@ function compileDir(dirname, context, template, data) {
     templateResult = compile(
       fs.readFileSync(dirname + '/' + file).toString(),
       functionName = noext(file));
-      result.push(`  ${functionName}: ${templateResult}`);
+    result.push(`  ${functionName}: ${templateResult}`);
   });
   var isContext = context || '';
   if (isContext === 'eval') context = 'module.exports';
@@ -286,7 +312,6 @@ function compileDir(dirname, context, template, data) {
     } catch (e) {
       throw new Error("Error evaluating " + data + ":" + e.message);
     }
-    console.log('Using data' + JSON.stringify(data));
     return result[template](data);
   }
   // var myself, method;
@@ -307,6 +332,10 @@ function compileDir(dirname, context, template, data) {
   return blurb + result;
 }
 
+function requireDir(dirname) {
+  return compileDir(dirname, 'eval')
+}
+
 function compile(text) {
   var ast = parse(text);
   return stringify(ast);
@@ -317,3 +346,4 @@ m.parse        = parse;
 m.stringify    = stringify;
 m.compile      = compile;
 m.compileDir   = compileDir;
+m.requireDir   = requireDir;

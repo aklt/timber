@@ -21,4 +21,3 @@ if (data && fs.existsSync(data)) {
 }
 
 console.log(timber.compileDir(dir, context, script, data));
-

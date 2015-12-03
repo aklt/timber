@@ -14,6 +14,7 @@
   "bin": "./bin/timber",
   "homepage": "http://bladre.dk/scripts",
   "devDependencies": {
-    "tape": "^4.2.2"
+    "tape": "^4.2.2",
+    "tape-spawn": "^1.4.0"
   }
 }
