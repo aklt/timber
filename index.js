@@ -1,6 +1,7 @@
 // Static templates form a directory of markup
 
 var fs = require('fs')
+var path = require('path');
 var pkg = require('./package')
 
 var m = module.exports = {}
@@ -278,21 +279,29 @@ function compileDir(dirname, context, template, data) {
   if (dirname === 'builtin')
     return builtinDefinitions;
 
-  // TODO Handle single files too
+  // TODO Handle symlinks
   var stat = fs.statSync(dirname);
-  if (!stat.isDirectory()) {
-    throw new Error("Usage: tpl <dirname>");
+  var files;
+  if (stat.isDirectory()) {
+    files = fs.readdirSync(dirname).filter(function (file) {
+      return !/^\./.test(file);
+    }).map(function (file) {
+      return dirname + '/' + file;
+    });
+  } else if (stat.isFile()) {
+    files = [dirname];
+  } else {
+    throw new Error('TODO stat.is...');
   }
 
   var blurb = '// Timber templates v' + pkg.version + ' compiled ' +
                                  (new Date()).toISOString() + '\n',
       result = [ ];
-  fs.readdirSync(dirname).forEach(function (file) {
-    if (/^\./.test(file)) return;
-    var functionName,
-    templateResult = compile(
-      fs.readFileSync(dirname + '/' + file).toString(),
-      functionName = noext(file));
+  files.forEach(function (filePath) {
+    var fileName = path.basename(filePath);
+    var functionName = noext(fileName);
+    var fileText = fs.readFileSync(filePath).toString();
+    var templateResult = compileText(fileText, functionName);
     result.push(`  ${functionName}: ${templateResult}`);
   });
   var isContext = context || '';
@@ -336,7 +345,7 @@ function requireDir(dirname) {
   return compileDir(dirname, 'eval')
 }
 
-function compile(text) {
+function compileText(text) {
   var ast = parse(text);
   return stringify(ast);
 }
@@ -344,6 +353,6 @@ function compile(text) {
 m.replaceParts = replaceParts;
 m.parse        = parse;
 m.stringify    = stringify;
-m.compile      = compile;
+m.compileText  = compileText;
 m.compileDir   = compileDir;
 m.requireDir   = requireDir;
