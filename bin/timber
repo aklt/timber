@@ -3,13 +3,17 @@
 var fs = require('fs');
 var timber = require('../index');
 
-var pathName     = process.argv[2],
-    context = process.argv[3],
+var pathName = process.argv[2],
+    varName = process.argv[3],
     script  = process.argv[4],
     data    = process.argv[5];
 
 if (!pathName) {
-    throw new Error("Usage: timber <dir|file> [context] [script] [data]");
+    throw new Error("Usage: timber <dir|file> <varName> [script] [data]");
+}
+
+if (!varName) {
+  throw new Error("Need varName argument");
 }
 
 if (script && fs.existsSync(script)) {
@@ -20,4 +24,4 @@ if (data && fs.existsSync(data)) {
     data = eval(fs.readFileSync(data).toString());
 }
 
-console.log(timber.compileDir(pathName, context, script, data));
+console.log(timber.compileDir(pathName, varName, script, data));
