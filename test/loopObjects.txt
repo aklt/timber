@@ -1,0 +1,3 @@
+Loop over an array of objects selecting the same property
+:loop o.array1
+  {t a}

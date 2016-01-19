@@ -20,3 +20,7 @@ function testEval (method, input, expected) {
 }
 
 testEval('escape', {foo: 'FO&'}, [/FO&amp;/, /FO&/])
+testEval('loopNumbers', {array1: [1, 2, 3]}, 
+  [/^  number1/m, /^  number2/m, /^  number3/m])
+testEval('loopObjects', {array1: [{a: 'aa'}, {a: 'bb'}]},
+  [/^  aa/m, /^  bb/m])
